@@ -6,6 +6,9 @@
   calibrate ingest --db X outcomes.csv            CSV: decision_id,question_key,actual[,observed_at]
   calibrate report --db X --question KEY --out dashboard.html [--target-far 0.05]
   calibrate alerts --db X --question KEY          print drift alerts (exit 2 if any: cron/CI friendly)
+  calibrate check decisions.csv [--threshold 0.5] [--target-far 0.05] [--out report.html]
+                                                  free one-time calibration report on your own exported
+                                                  decisions; runs locally, no API key, nothing uploaded
 """
 from __future__ import annotations
 
@@ -74,6 +77,18 @@ def cmd_alerts(a):
     sys.exit(2 if rep["alerts"] else 0)
 
 
+def cmd_check(a):
+    from .check import CheckError, run_check
+    try:
+        res = run_check(a.csv, threshold=0.5 if a.threshold is None else a.threshold, target_far=a.target_far,
+                        out=a.out, threshold_explicit=a.threshold is not None)
+    except FileNotFoundError:
+        sys.exit(f"calibrate check: file not found: {a.csv}")
+    except CheckError as e:
+        sys.exit(f"calibrate check: {e}")
+    print(res["summary"])
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog="calibrate", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -89,6 +104,16 @@ def main(argv=None):
                                                               help="show the SYNTHETIC DATA banner"); r.set_defaults(fn=cmd_report)
     al = sub.add_parser("alerts"); al.add_argument("--db", default="calibrate.db"); al.add_argument("--question", required=True)
     al.add_argument("--threshold", type=float); al.set_defaults(fn=cmd_alerts)
+    ck = sub.add_parser("check", help="free calibration report on a CSV of your own decisions (local, no API key)",
+                        description="Calibration report on decisions you exported yourself. Runs locally; nothing "
+                                    "leaves your machine. Required columns: probability (or score/confidence) and "
+                                    "outcome (or actual/label). Optional: decision, threshold, model_version, "
+                                    "segment, timestamp.")
+    ck.add_argument("csv", help="decisions CSV")
+    ck.add_argument("--threshold", type=float, help="decision threshold for rows without a threshold column value (default 0.5)")
+    ck.add_argument("--target-far", type=float, default=0.05, help="target false-accept rate for the recommended threshold (default 0.05)")
+    ck.add_argument("--out", default="report.html", help="HTML report path (default report.html)")
+    ck.set_defaults(fn=cmd_check)
     a = p.parse_args(argv)
     a.fn(a)
 

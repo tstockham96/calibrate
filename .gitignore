@@ -4,3 +4,4 @@ __pycache__/
 demo_out/
 *.egg-info/
 .venv/
+report.html

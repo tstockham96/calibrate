@@ -1,5 +1,35 @@
 # calibrate (prototype)
 
+## Free calibration check on your own data
+
+Export your AI decisions to a CSV and get a one-time calibration report. No API key, no account, no network calls:
+it runs locally with the Python standard library, and **nothing leaves your machine**.
+
+**Columns** (headers are case-insensitive; aliases in brackets):
+
+| column | required | notes |
+|---|---|---|
+| `probability` [`score`, `confidence`] | yes | 0–1 (or `85%`). P(yes), or the probability of the chosen option for multi-choice decisions |
+| `outcome` [`actual`, `label`] | yes | ground truth: `1/0`, `true/false`, `yes/no`, or the correct category |
+| `decision` | no | what the model decided (yes/no or a category). If absent: `probability >= threshold` |
+| `threshold` | no | threshold in force per row (otherwise `--threshold`, default 0.5) |
+| `model_version`, `segment`, `timestamp` | no | breakdowns and accuracy over time |
+
+**One command:**
+
+```bash
+python3 -m calibrate check decisions.csv --target-far 0.05 --out report.html
+# or, after `pip install -e .`:   calibrate check decisions.csv [--threshold 0.5] [--target-far 0.05] [--out report.html]
+```
+
+You get a terminal summary and a self-contained `report.html` (no external assets): a plain-language verdict, accuracy,
+ECE with 10 reliability bins (counts shown), Brier score, AUROC, false-accept / false-reject at your current threshold,
+the same per segment and model version (small samples flagged), accuracy over time, and the lowest threshold that meets
+your target false-accept rate together with what it costs in false rejects. Try it on the synthetic sample:
+`python3 -m calibrate check examples/sample_decisions.csv` (invented data, labelled as such in the file and the report).
+
+## Continuous monitoring (prototype)
+
 ![Calibrate dashboard (synthetic demo data)](docs/dashboard.png)
 
 Production monitoring for typed AI decision models (Jev-style `noul` / `choice` / `score`). Pure Python stdlib, Python ≥ 3.10.
