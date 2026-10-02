@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.db
+demo_out/
+*.egg-info/
+.venv/

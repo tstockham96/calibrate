@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "calibrate-monitor"
+version = "0.0.1"
+description = "Prototype: production monitoring for typed AI decision models (Jev-style choice/score/noul). Demo uses synthetic data."
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+calibrate = "calibrate.cli:main"
+
+[tool.setuptools]
+packages = ["calibrate"]
