@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calibrate — production monitoring for AI decision models</title>
+<meta name="description" content="Know when your Jev / decision-API thresholds stop working. Live accuracy, calibration, false-accept rates and drift alerts against your own ground truth.">
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white text-slate-900 antialiased">
+
+<header class="border-b">
+  <div class="max-w-5xl mx-auto px-5 h-14 flex items-center justify-between">
+    <a href="#" class="font-semibold tracking-tight">Calibrate</a>
+    <nav class="flex items-center gap-5 text-sm text-slate-600">
+      <a href="#how" class="hover:text-slate-900">How it works</a>
+      <a href="#pricing" class="hover:text-slate-900">Founding offer</a>
+      <a href="#faq" class="hover:text-slate-900">FAQ</a>
+      <a href="#waitlist" class="rounded-md bg-slate-900 text-white px-3 py-1.5 hover:bg-slate-700">Join waitlist</a>
+    </nav>
+  </div>
+</header>
+
+<section class="max-w-5xl mx-auto px-5 pt-16 pb-10">
+  <p class="text-sm font-medium text-indigo-600 mb-3">For teams shipping Jev, OpenAI Decisions, and other typed decision APIs</p>
+  <h1 class="text-4xl md:text-5xl font-semibold tracking-tight leading-tight max-w-3xl">Your decision model's threshold was right on launch day. Is it still right today?</h1>
+  <p class="mt-5 text-lg text-slate-600 max-w-2xl">Calibrate logs every typed decision your app makes, joins it to what actually happened, and alerts you when accuracy, calibration, or your false-accept rate slips — by segment and by model version. Then it tells you which threshold to use now.</p>
+  <div class="mt-8 flex flex-wrap gap-3">
+    <a href="#pricing" class="rounded-lg bg-indigo-600 text-white px-5 py-3 font-medium hover:bg-indigo-500">Pre-order: $99 for 3 months</a>
+    <a href="#waitlist" class="rounded-lg border px-5 py-3 font-medium hover:bg-slate-50">Join the free waitlist</a>
+  </div>
+  <p class="mt-3 text-sm text-slate-500">Not live yet. Founding customers get a full refund if it doesn't ship by December 1, 2026.</p>
+</section>
+
+<section class="bg-slate-50 border-y">
+  <div class="max-w-5xl mx-auto px-5 py-14">
+    <h2 class="text-2xl font-semibold tracking-tight">The problem: "calibrated" doesn't mean calibrated <em>on your data</em></h2>
+    <p class="mt-3 text-slate-600 max-w-3xl">Decision models return a probability, and your code acts on it above a threshold. That threshold silently goes stale when your inputs, segments, or the model version change. Public evidence from the last three weeks:</p>
+    <div class="mt-8 grid md:grid-cols-2 gap-4">
+      <div class="bg-white border rounded-xl p-5">
+        <div class="text-3xl font-semibold">9</div>
+        <p class="mt-1 text-slate-600">known failure modes listed in TypeSafe's own Jev 1.13 docs, including adversarial content, large state, and the warning not to carry a threshold tuned on a Noul over to a Choice.</p>
+        <a class="text-xs text-indigo-600 mt-2 inline-block" href="https://docs.typesafe.ai/model-jaggedness/jev-1.13.md">docs.typesafe.ai — Jev 1.13 jaggedness</a>
+      </div>
+      <div class="bg-white border rounded-xl p-5">
+        <div class="text-3xl font-semibold">12.1%</div>
+        <p class="mt-1 text-slate-600">of decisions flipped by appending a single unverified opinion to the state, on jev-1.13.0 (JevAdvBench, 95% interval 8.5–15.5%).</p>
+        <a class="text-xs text-indigo-600 mt-2 inline-block" href="https://arxiv.org/abs/2609.31142">arXiv 2609.31142</a>
+      </div>
+      <div class="bg-white border rounded-xl p-5">
+        <div class="text-3xl font-semibold">"do not transfer"</div>
+        <p class="mt-1 text-slate-600">RLCDAlignBench: Jev's probabilities rank well, but thresholds fitted on one dataset don't carry over to another; a handful of local labels fixes much of it.</p>
+        <a class="text-xs text-indigo-600 mt-2 inline-block" href="https://arxiv.org/html/2609.29429v1">arXiv 2609.29429</a>
+      </div>
+      <div class="bg-white border rounded-xl p-5">
+        <div class="text-3xl font-semibold">32%</div>
+        <p class="mt-1 text-slate-600">false-admission rate (47 of 148 negatives) Jason Lemkin reported when trying Jev for SaaStr Connect — the number that made him stop.</p>
+        <a class="text-xs text-indigo-600 mt-2 inline-block" href="https://jevainews.com/news/saastr-false-admissions/">Jev News report of his Sep 19 post</a>
+      </div>
+    </div>
+    <p class="mt-6 text-sm text-slate-500 max-w-3xl">TypeSafe's own customer agreement says the customer "is responsible for independently evaluating the output" (<a class="underline" href="https://typesafe.ai/legal/mca">MCA §9.3</a>). CI tests catch regressions before you ship. Calibrate watches what happens after.</p>
+  </div>
+</section>
+
+<section id="how" class="max-w-5xl mx-auto px-5 py-14">
+  <h2 class="text-2xl font-semibold tracking-tight">How it works</h2>
+  <div class="mt-8 grid md:grid-cols-3 gap-6">
+    <div><div class="text-sm font-mono text-indigo-600">01 · Log</div><h3 class="font-semibold mt-1">Wrap your decision calls</h3><p class="text-slate-600 mt-1 text-sm">A thin SDK records each typed answer: question hash, choice / score / noul, probability, confidence, resolved model version, threshold in force, and your segment tags. State is hashed, not stored, by default. Your provider API key never leaves your process.</p></div>
+    <div><div class="text-sm font-mono text-indigo-600">02 · Join outcomes</div><h3 class="font-semibold mt-1">Send ground truth when you learn it</h3><p class="text-slate-600 mt-1 text-sm">Refund approved? Ticket reopened? Lead converted? Post outcomes by webhook or upload a CSV days later. Calibrate joins them to the original decisions.</p></div>
+    <div><div class="text-sm font-mono text-indigo-600">03 · Watch &amp; act</div><h3 class="font-semibold mt-1">Get alerted, get a new threshold</h3><p class="text-slate-600 mt-1 text-sm">Live accuracy, calibration curves (ECE), false-accept / false-reject rates, and drift by segment and model version. When something slips: an alert, plus the threshold that meets your stated false-accept bar. Optional shadow mode runs the same traffic through a second provider so you can compare.</p></div>
+  </div>
+  <pre class="mt-8 bg-slate-900 text-slate-100 text-sm rounded-xl p-5 overflow-x-auto"><code>from calibrate import Monitor
+
+mon = Monitor("calibrate.db")   # uses TYPESAFE_API_KEY if set, a mock provider otherwise
+res = mon.decide(state, {"refund_eligible": {"type": "noul", "instructions": "Is this refund eligible under `policy`?"}},
+                 model="jev-1.13.0", segment="channel=chat", thresholds={"refund_eligible": 0.7})
+
+# days later, when you know the truth:
+mon.record_outcome(res["decision_id"], "refund_eligible", "no")</code></pre>
+  <p class="mt-2 text-xs text-slate-500">That's the working prototype API. The hosted version adds the webhook, alerts to Slack/email, and a team dashboard.</p>
+</section>
+
+<section class="bg-slate-50 border-y">
+  <div class="max-w-5xl mx-auto px-5 py-14">
+    <h2 class="text-2xl font-semibold tracking-tight">What the dashboard looks like</h2>
+    <p class="mt-2 text-slate-600">A screenshot of the working prototype. <strong>The data in it is synthetic</strong>: a mock provider and an invented refund-bot scenario, not measurements of Jev or any real model.</p>
+    <figure class="mt-6">
+      <img src="dashboard.png" alt="Calibrate prototype dashboard on synthetic data: accuracy by segment, calibration curve, false-accept rate, drift alerts, threshold recommendations, shadow comparison" class="rounded-xl border shadow-sm w-full">
+      <figcaption class="text-xs text-slate-500 mt-2">In this made-up scenario, chat tickets start carrying customer arguments on day 22. False-accepts in that segment climb above the 5% bar, Calibrate raises an alert, and it suggests raising that segment's threshold from 0.50 to 0.76.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="max-w-5xl mx-auto px-5 py-14">
+  <h2 class="text-2xl font-semibold tracking-tight">Why not the tools I already have?</h2>
+  <div class="mt-6 grid md:grid-cols-2 gap-6 text-sm text-slate-600">
+    <p><strong class="text-slate-900">CI and calibration scripts</strong> (jevcal, jevkit-calibrate, regression suites) check a frozen labelled set before deploy. They're useful, and they don't see what production inputs do next week.</p>
+    <p><strong class="text-slate-900">LLM tracing tools</strong> trace prompts and spans and score text. Typed decisions need reliability diagrams, false-accept rates at the threshold you actually use, and per-question threshold advice.</p>
+    <p><strong class="text-slate-900">Enterprise ML monitoring</strong> (Arize, Fiddler) can chart classifier calibration, and they're good. They're built around generic model and feature schemas and enterprise rollouts. Calibrate is built around one call carrying many typed questions, question versions, and provider model aliases.</p>
+    <p><strong class="text-slate-900">Multi-provider by design.</strong> Jev today, OpenAI's Decisions API when its preview opens up, and Jev-compatible endpoints. Compare them on your own traffic and your own labels.</p>
+  </div>
+</section>
+
+<section id="pricing" class="bg-indigo-50 border-y border-indigo-100">
+  <div class="max-w-5xl mx-auto px-5 py-14 grid md:grid-cols-2 gap-10 items-start">
+    <div>
+      <h2 class="text-2xl font-semibold tracking-tight">Founding pre-order</h2>
+      <p class="mt-3 text-slate-600">The first 3 months of the Team plan for <strong>$99 total</strong>, instead of $99/month. Limited to founding customers. You're paying for early access and a direct line to shape the roadmap, not for something that already exists.</p>
+      <ul class="mt-5 space-y-2 text-sm text-slate-700">
+        <li>✓ Team plan: up to 1M logged decisions/month, 5 seats, 90-day retention <span class="text-slate-400">(planned limits)</span></li>
+        <li>✓ Jev adapter at launch; OpenAI Decisions adapter once its API is public</li>
+        <li>✓ Slack / email alerts, threshold recommendations, shadow mode</li>
+        <li>✓ Weekly founder call during beta</li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-2xl border p-6 shadow-sm">
+      <div class="text-sm text-slate-500">Founding Team plan · 3 months</div>
+      <div class="mt-1 text-4xl font-semibold">$99</div>
+      <div class="text-sm text-slate-500">one-time · then $99/mo or cancel</div>
+      <a href="https://buy.stripe.com/6oUfZi8RpenGeQW2S72oE00" class="mt-6 block text-center rounded-lg bg-indigo-600 text-white px-5 py-3 font-medium hover:bg-indigo-500">Pre-order with Stripe</a>
+      <p class="mt-4 text-xs text-slate-500"><strong>Refund guarantee:</strong> if the hosted Team plan isn't available to you by <strong>December 1, 2026</strong>, you get a 100% refund. You can also ask for a full refund any time before you start using it. Email <a href="mailto:tstockham96@gmail.com" class="underline">tstockham96@gmail.com</a>.</p>
+    </div>
+  </div>
+</section>
+
+<section id="faq" class="max-w-3xl mx-auto px-5 py-14">
+  <h2 class="text-2xl font-semibold tracking-tight">FAQ</h2>
+  <div class="mt-6 divide-y border-y">
+    <details class="py-4"><summary class="font-medium cursor-pointer">Does it exist yet?</summary><p class="mt-2 text-sm text-slate-600">A working prototype exists: an SDK that logs to SQLite, CSV outcome ingestion, and the static dashboard shown above. The hosted product (webhooks, alerts, team dashboard) is what you're pre-ordering. Target date is December 1, 2026, with a refund if it slips.</p></details>
+    <details class="py-4"><summary class="font-medium cursor-pointer">Do you need my TypeSafe / OpenAI API key?</summary><p class="mt-2 text-sm text-slate-600">No. The SDK runs in your process with your own key and sends Calibrate only decision metadata. Provider terms generally say not to share credentials, so we designed around that. If you want a proxy, it runs self-hosted in your infrastructure.</p></details>
+    <details class="py-4"><summary class="font-medium cursor-pointer">What data do you store?</summary><p class="mt-2 text-sm text-slate-600">By default: a hash of the state, the question definition hash, the typed answer, probability/confidence, model version, threshold, timestamp, your segment tags, and the outcomes you send. Raw state is opt-in (for debugging specific misses).</p></details>
+    <details class="py-4"><summary class="font-medium cursor-pointer">Is this a Jev benchmark?</summary><p class="mt-2 text-sm text-slate-600">No. Calibrate privately monitors <em>your</em> decisions against <em>your</em> outcomes, inside your workspace. We don't publish leaderboards, and we don't train models on anyone's provider output.</p></details>
+    <details class="py-4"><summary class="font-medium cursor-pointer">I don't have ground truth for everything.</summary><p class="mt-2 text-sm text-slate-600">You rarely do. Label-free signals (probability-distribution drift, PSI, confidence shifts, model-version changes) alert early. Partial or delayed labels (a reviewed sample, reopened tickets, chargebacks) drive the accuracy and false-accept metrics, which are always shown with sample sizes.</p></details>
+    <details class="py-4"><summary class="font-medium cursor-pointer">Which providers?</summary><p class="mt-2 text-sm text-slate-600">TypeSafe Jev first (the documented <code>/v1/systemone</code> shape). OpenAI Decisions once its schema is public; it's in limited preview today. Then any Jev-compatible endpoint. Shadow mode compares them on the same traffic.</p></details>
+    <details class="py-4"><summary class="font-medium cursor-pointer">Are you affiliated with TypeSafe or OpenAI?</summary><p class="mt-2 text-sm text-slate-600">No. Calibrate is independent. Jev is a product of TypeSafe AI, Inc.</p></details>
+  </div>
+</section>
+
+<section id="waitlist" class="bg-slate-900 text-white">
+  <div class="max-w-3xl mx-auto px-5 py-14">
+    <h2 class="text-2xl font-semibold tracking-tight">Not ready to pre-order? Join the waitlist.</h2>
+    <p class="mt-2 text-slate-300 text-sm">Tell us what you're deciding and we'll invite you to the beta. No spam; one email when there's something to try.</p>
+    <form action="https://formsubmit.co/tstockham96@gmail.com" method="POST" class="mt-6 grid md:grid-cols-2 gap-3">
+      <input type="hidden" name="_subject" value="New Calibrate waitlist signup">
+      <input type="hidden" name="_next" value="https://calibrate.tools/thanks.html">
+      <input type="hidden" name="_template" value="table">
+      <input type="text" name="_honey" style="display:none">
+      <input required type="email" name="email" placeholder="Work email" class="rounded-lg px-4 py-3 text-slate-900">
+      <select name="provider" class="rounded-lg px-4 py-3 text-slate-900">
+        <option value="">Decision provider…</option><option>TypeSafe Jev</option><option>OpenAI Decisions (preview)</option><option>Jev-compatible / open model</option><option>LLM classifier (prompted)</option><option>Evaluating</option>
+      </select>
+      <select name="volume" class="rounded-lg px-4 py-3 text-slate-900">
+        <option value="">Decisions per month…</option><option>&lt; 10k</option><option>10k – 100k</option><option>100k – 1M</option><option>&gt; 1M</option>
+      </select>
+      <input type="text" name="use_case" placeholder="What does it decide? (e.g. refund eligibility)" class="rounded-lg px-4 py-3 text-slate-900">
+      <button class="md:col-span-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 px-5 py-3 font-medium">Join waitlist</button>
+    </form>
+  </div>
+</section>
+
+<footer class="max-w-5xl mx-auto px-5 py-8 text-xs text-slate-500 flex flex-wrap justify-between gap-2">
+  <span>© 2026 Calibrate · Salt Lake City · <a href="mailto:tstockham96@gmail.com" class="underline">tstockham96@gmail.com</a></span>
+  <span>Independent; not affiliated with TypeSafe AI or OpenAI. Cited figures are third-party published results, linked at source.</span>
+</footer>
+</body>
+</html>
